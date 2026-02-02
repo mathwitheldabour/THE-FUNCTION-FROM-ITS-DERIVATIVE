@@ -1,384 +1,293 @@
-import streamlit as st
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.ticker import MultipleLocator
-import random
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
 
-# ---------------------------------------------------------
-# 1. إعداد الصفحة والتنسيقات (CSS)
-# ---------------------------------------------------------
-st.set_page_config(layout="wide", page_title="Calculus Infinite Quiz")
+<question type="category">
+    <category>
+        <text>$course$/Moodle_Quiz_Mr_Ibrahim_Style</text>
+    </category>
+</question>
 
-st.markdown("""
-<style>
-    .stApp { text-align: center; }
-    
-    /* تنسيق صندوق السؤال */
-    .question-box {
-        background-color: #f8f9fa;
-        padding: 25px;
-        border-radius: 15px;
-        border-top: 6px solid #007bff;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    }
-    
-    /* تنسيق النصوص داخل السؤال */
-    .q-en {
-        text-align: left;
-        direction: ltr;
-        font-size: 18px;
-        color: #0056b3;
-        font-weight: 600;
-        margin-bottom: 10px;
-    }
-    .q-ar {
-        text-align: right;
-        direction: rtl;
-        font-size: 20px;
-        color: #0056b3;
-        font-weight: 700;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    
-    /* تنسيق المعادلات داخل النصوص العربية */
-    .math-text {
-        direction: ltr;
-        display: inline-block;
-        font-weight: bold;
-        color: #d63384;
-    }
-
-    /* تنسيق البطاقات (الخيارات) */
-    div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"] {
-        gap: 1rem;
-    }
-    
-    /* النصوص داخل بطاقة الاختيار */
-    .opt-en {
-        text-align: left;
-        direction: ltr;
-        font-size: 16px;
-        color: #333;
-        margin-bottom: 8px;
-    }
-    .opt-ar {
-        text-align: right;
-        direction: rtl;
-        font-size: 18px;
-        color: #444;
-        border-top: 1px solid #eee;
-        padding-top: 8px;
-        font-family: 'Segoe UI', sans-serif;
-    }
-    
-    /* حرف الاختيار */
-    .opt-letter {
-        font-size: 22px;
-        font-weight: 900;
-        color: #007bff;
-        margin-bottom: 5px;
-        display: block;
-        text-align: center;
-    }
-
-    /* أزرار الإجابة */
-    .stButton button {
-        width: 100%;
-        border-radius: 8px;
-        transition: 0.3s;
-    }
-    div[data-testid="column"] .stButton button:hover {
-        background-color: #007bff;
-        color: white;
-        border-color: #007bff;
-        transform: scale(1.02);
-    }
-    
-    /* زر محاولة جديدة */
-    .new-quiz-btn button {
-        background-color: #28a745 !important;
-        color: white !important;
-        font-size: 20px !important;
-        padding: 15px !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# ---------------------------------------------------------
-# 2. مولد الأسئلة الذكي (Logic Generator)
-# ---------------------------------------------------------
-
-def generate_linear_question():
-    """توليد سؤال لدالة مشتقة خطية: f'(x) = a(x-r)"""
-    r = random.randint(-3, 3) # الجذر
-    slope = random.choice([-1, 1]) # الميل
-    
-    # تعريف دالة المشتقة للرسم
-    def func_prime(x): return slope * (x - r)
-    
-    # تحديد الإجابة الصحيحة
-    if slope > 0: # المشتقة كانت سالبة ثم موجبة (صغرى)
-        correct_en = rf"Dec on $(-\infty, {r})$, Inc on $({r}, \infty)$; Min at $x={r}$"
-        correct_ar = rf"تناقص $(-\infty, {r})$، تزايد $({r}, \infty)$؛ صغرى عند $x={r}$"
-        # مشتتات
-        d1_en = rf"Inc on $(-\infty, {r})$, Dec on $({r}, \infty)$; Max at $x={r}$"
-        d1_ar = rf"تزايد $(-\infty, {r})$، تناقص $({r}, \infty)$؛ عظمى عند $x={r}$"
-    else: # المشتقة كانت موجبة ثم سالبة (عظمى)
-        correct_en = rf"Inc on $(-\infty, {r})$, Dec on $({r}, \infty)$; Max at $x={r}$"
-        correct_ar = rf"تزايد $(-\infty, {r})$، تناقص $({r}, \infty)$؛ عظمى عند $x={r}$"
-        # مشتتات
-        d1_en = rf"Dec on $(-\infty, {r})$, Inc on $({r}, \infty)$; Min at $x={r}$"
-        d1_ar = rf"تناقص $(-\infty, {r})$، تزايد $({r}, \infty)$؛ صغرى عند $x={r}$"
-        
-    return {
-        "func": func_prime,
-        "q_en": r"Determine the local extrema from the graph of $f'(x)$.",
-        "q_ar": r"حدد القيم القصوى المحلية من رسم المشتقة $f'(x)$.",
-        "correct": {"en": correct_en, "ar": correct_ar},
-        "distractors": [
-            {"en": d1_en, "ar": d1_ar},
-            {"en": rf"No local extrema; Inflection at $x={r}$", "ar": rf"لا توجد قيم قصوى؛ نقطة انقلاب عند $x={r}$"},
-            {"en": rf"Local Max at $x=0$", "ar": rf"قيمة عظمى محلية عند $x=0$"}
-        ]
-    }
-
-def generate_quadratic_question():
-    """توليد سؤال لدالة تربيعية: f'(x) = a(x-r1)(x-r2)"""
-    roots = sorted(random.sample(range(-3, 4), 2))
-    r1, r2 = roots[0], roots[1]
-    a = random.choice([-0.5, 0.5]) # التقعر
-    
-    def func_prime(x): return a * (x - r1) * (x - r2)
-    
-    if a > 0: # + (Inc) -> r1 -> - (Dec) -> r2 -> + (Inc)
-        correct_en = rf"Max at $x={r1}$, Min at $x={r2}$"
-        correct_ar = rf"عظمى عند $x={r1}$، صغرى عند $x={r2}$"
-        d1_en = rf"Min at $x={r1}$, Max at $x={r2}$"
-        d1_ar = rf"صغرى عند $x={r1}$، عظمى عند $x={r2}$"
-    else: # - (Dec) -> r1 -> + (Inc) -> r2 -> - (Dec)
-        correct_en = rf"Min at $x={r1}$, Max at $x={r2}$"
-        correct_ar = rf"صغرى عند $x={r1}$، عظمى عند $x={r2}$"
-        d1_en = rf"Max at $x={r1}$, Min at $x={r2}$"
-        d1_ar = rf"عظمى عند $x={r1}$، صغرى عند $x={r2}$"
-
-    return {
-        "func": func_prime,
-        "q_en": r"Identify the local extrema for $f(x)$.",
-        "q_ar": r"حدد القيم القصوى المحلية للدالة $f(x)$.",
-        "correct": {"en": correct_en, "ar": correct_ar},
-        "distractors": [
-            {"en": d1_en, "ar": d1_ar},
-            {"en": rf"Max at $x={(r1+r2)/2}$ (Vertex)", "ar": rf"عظمى عند رأس القطع $x={(r1+r2)/2}$"},
-            {"en": rf"Decreasing everywhere", "ar": rf"متناقصة على مجالها"}
-        ]
-    }
-
-def generate_touching_question():
-    """توليد سؤال لجذر مكرر (يمس المحور): f'(x) = a(x-r)^2"""
-    r = random.randint(-2, 2)
-    a = random.choice([-0.3, 0.3])
-    
-    def func_prime(x): return a * (x - r)**2
-    
-    # الإشارة لا تتغير حول الجذر (موجب-موجب أو سالب-سالب)
-    correct_en = rf"No extrema (Inflection Point at $x={r}$)"
-    correct_ar = rf"لا توجد قيم قصوى (نقطة انقلاب عند $x={r}$)"
-    
-    return {
-        "func": func_prime,
-        "q_en": r"Analyze the critical point at the root.",
-        "q_ar": r"حلل النقطة الحرجة عند الجذر.",
-        "correct": {"en": correct_en, "ar": correct_ar},
-        "distractors": [
-            {"en": rf"Local Maximum at $x={r}$", "ar": rf"قيمة عظمى محلية عند $x={r}$"},
-            {"en": rf"Local Minimum at $x={r}$", "ar": rf"قيمة صغرى محلية عند $x={r}$"},
-            {"en": rf"Vertical Asymptote at $x={r}$", "ar": rf"خط تقارب رأسي عند $x={r}$"}
-        ]
-    }
-
-def generate_quiz():
-    """توليد اختبار جديد مكون من 4 أسئلة عشوائية"""
-    q1 = generate_linear_question()
-    q2 = generate_quadratic_question()
-    q3 = generate_touching_question()
-    # يمكن إضافة نوع رابع أو تكرار نوع بمعاملات مختلفة
-    q4 = generate_linear_question() 
-    
-    # خلط ترتيب أنواع الأسئلة
-    quiz = [q1, q2, q3, q4]
-    random.shuffle(quiz)
-    return quiz
-
-# ---------------------------------------------------------
-# 3. إدارة الحالة (Session State)
-# ---------------------------------------------------------
-if 'quiz_data' not in st.session_state:
-    st.session_state.quiz_data = generate_quiz()
-if 'q_index' not in st.session_state:
-    st.session_state.q_index = 0
-if 'answered' not in st.session_state:
-    st.session_state.answered = False
-if 'selected_opt' not in st.session_state:
-    st.session_state.selected_opt = None
-
-def reset_quiz():
-    st.session_state.quiz_data = generate_quiz()
-    st.session_state.q_index = 0
-    st.session_state.answered = False
-    st.session_state.selected_opt = None
-
-def check_answer(code):
-    st.session_state.selected_opt = code
-    st.session_state.answered = True
-
-def next_question():
-    if st.session_state.q_index < len(st.session_state.quiz_data) - 1:
-        st.session_state.q_index += 1
-        st.session_state.answered = False
-        st.session_state.selected_opt = None
-
-def prev_question():
-    if st.session_state.q_index > 0:
-        st.session_state.q_index -= 1
-        st.session_state.answered = False
-        st.session_state.selected_opt = None
-
-# ---------------------------------------------------------
-# 4. دالة الرسم البياني
-# ---------------------------------------------------------
-def plot_derivative(func_prime, x_range=(-5, 5), y_range=(-5, 5)):
-    x = np.linspace(x_range[0], x_range[1], 1000)
-    y = func_prime(x)
-    fig, ax = plt.subplots(figsize=(6, 3))
-    ax.spines['left'].set_position('zero')
-    ax.spines['bottom'].set_position('zero')
-    ax.spines['right'].set_color('none')
-    ax.spines['top'].set_color('none')
-    ax.xaxis.set_major_locator(MultipleLocator(1))
-    ax.yaxis.set_major_locator(MultipleLocator(1))
-    ax.grid(True, which='both', linestyle=':', alpha=0.6)
-    ax.plot(x, y, color='#007bff', linewidth=2.5)
-    ax.text(x_range[1]*0.8, y_range[1]*0.8, "y = f'(x)", fontsize=12, color='#007bff', fontweight='bold')
-    ax.set_ylim(y_range)
-    ax.set_xlim(x_range)
-    plt.tight_layout()
-    return fig
-
-# ---------------------------------------------------------
-# 5. العرض (UI Rendering)
-# ---------------------------------------------------------
-
-# جلب بيانات السؤال الحالي
-current_quiz = st.session_state.quiz_data
-q_idx = st.session_state.q_index
-q_data = current_quiz[q_idx]
-
-# شريط التقدم
-st.progress((q_idx + 1) / len(current_quiz))
-
-# 1. صندوق السؤال
-st.markdown(f"""
-<div class="question-box">
-    <div class="q-en">Q{q_idx+1}: {q_data['q_en']}</div>
-    <div class="q-ar">س{q_idx+1}: {q_data['q_ar']}</div>
-</div>
-""", unsafe_allow_html=True)
-
-# 2. الرسم البياني
-c1, c2, c3 = st.columns([1, 2, 1])
-with c2:
-    st.pyplot(plot_derivative(q_data['func']))
-
-st.write("---")
-
-# 3. تجهيز الخيارات (خلط عشوائي)
-# نستخدم random.seed مرتبط برقم السؤال والبيانات لضمان ثبات الخيارات أثناء التفاعل
-seed_val = q_idx + int(q_data['func'](0)*100) # seed فريد لكل سؤال مولد
-random.seed(seed_val)
-
-options_list = []
-# إضافة الصحيح
-options_list.append({**q_data['correct'], "is_correct": True})
-# إضافة المشتتات
-for dist in q_data['distractors']:
-    options_list.append({**dist, "is_correct": False})
-
-random.shuffle(options_list)
-
-# عرض الخيارات
-cols = st.columns(4)
-letters = ['A', 'B', 'C', 'D']
-option_map = {}
-
-for idx, col in enumerate(cols):
-    opt = options_list[idx]
-    letter = letters[idx]
-    option_map[letter] = opt
-    
-    with col:
-        # حاوية البطاقة
-        with st.container(border=True):
-            st.markdown(f"<span class='opt-letter'>{letter}</span>", unsafe_allow_html=True)
-            
-            # النص الإنجليزي (يسار)
-            st.markdown(f"<div class='opt-en'>{opt['en']}</div>", unsafe_allow_html=True)
-            
-            # النص العربي (يمين) - لاحظ وضع dir="rtl"
-            st.markdown(f"""
-            <div class='opt-ar'>
-                {opt['ar']}
+<question type="multichoice">
+    <name><text>Q01 - Behavior on Interval</text></name>
+    <questiontext format="html">
+        <text><![CDATA[
+            <div dir="rtl" style="font-family: 'Segoe UI', sans-serif; background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; border-right: 5px solid #3b82f6;">
+                <p style="color: #475569; font-size: 1rem; text-align: left; direction: ltr;">1. If \( f'(x) \) has zeros at \( x=-1, 4 \) and \( f'(0) = -1 \), then on \( (-1, 4) \), \( f \) is:</p>
+                <h4 style="color: #1e3a8a; text-align: right; margin-top: 10px;">1. إذا كانت أصفار \( f'(x) \) هي \( x=-1, 4 \) وكان \( f'(0) = -1 \)، فإن الدالة في الفترة \( (-1, 4) \) تكون:</h4>
             </div>
-            """, unsafe_allow_html=True)
-            
-            # زر الاختيار داخل البطاقة
-            if st.button(f"Choose {letter}", key=f"btn_{q_idx}_{letter}"):
-                check_answer(letter)
-
-# 4. عرض النتيجة
-if st.session_state.answered:
-    selected = st.session_state.selected_opt
-    chosen_data = option_map[selected]
+        ]]></text>
+    </questiontext>
+    <defaultgrade>1.0000000</defaultgrade>
+    <shuffleanswers>1</shuffleanswers>
+    <numbering style="none" />
     
-    st.write("")
-    if chosen_data['is_correct']:
-        st.success(f"✅ Correct! الإجابة ({selected}) صحيحة.", icon="✅")
-        st.balloons()
-    else:
-        st.error(f"❌ Incorrect. لقد اخترت ({selected}).", icon="❌")
-        # عرض الصحيح
-        correct_letter = [k for k, v in option_map.items() if v['is_correct']][0]
-        correct_text = option_map[correct_letter]
-        st.markdown(f"""
-        <div style="background-color:#d4edda; color:#155724; padding:15px; border-radius:10px; direction:rtl; text-align:center;">
-            <b>الإجابة الصحيحة هي: {correct_letter}</b><br>
-            <span dir="ltr">{correct_text['en']}</span><br>
-            {correct_text['ar']}
-        </div>
-        """, unsafe_allow_html=True)
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">A) Increasing (متزايدة)</div>]]></text>
+    </answer>
+    <answer fraction="100" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">B) Decreasing (متناقصة)</div>]]></text>
+        <feedback format="html"><text><![CDATA[<div dir="rtl">أحسنت! بما أن المشتقة سالبة في الفترة، فالدالة متناقصة.</div>]]></text></feedback>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">C) Constant (ثابتة)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">D) Concave Up (مقعرة للأعلى)</div>]]></text>
+    </answer>
+</question>
 
-st.write("---")
+<question type="multichoice">
+    <name><text>Q02 - Local Extrema</text></name>
+    <questiontext format="html">
+        <text><![CDATA[
+            <div dir="rtl" style="font-family: 'Segoe UI', sans-serif; background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; border-right: 5px solid #3b82f6;">
+                <p style="color: #475569; font-size: 1rem; text-align: left; direction: ltr;">2. Given \( f'(x) = (x-2)^2 \). At \( x=2 \), the function has:</p>
+                <h4 style="color: #1e3a8a; text-align: right; margin-top: 10px;">2. معطى أن \( f'(x) = (x-2)^2 \). عند النقطة \( x=2 \)، للدالة:</h4>
+            </div>
+        ]]></text>
+    </questiontext>
+    <defaultgrade>1.0000000</defaultgrade>
+    <shuffleanswers>1</shuffleanswers>
+    <numbering style="none" />
+    
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">A) Local Max (عظمى محلية)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">B) Local Min (صغرى محلية)</div>]]></text>
+    </answer>
+    <answer fraction="100" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">C) No Local Extrema (لا توجد قصوى)</div>]]></text>
+        <feedback format="html"><text><![CDATA[<div dir="rtl">صحيح، لأن الإشارة لا تتغير حول الصفر المكرر (تربيع).</div>]]></text></feedback>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">D) Undefined (غير معرفة)</div>]]></text>
+    </answer>
+</question>
 
-# 5. أزرار التنقل والتحكم
-c_prev, c_new, c_next = st.columns([1, 2, 1])
+<question type="multichoice">
+    <name><text>Q03 - Monotonicity</text></name>
+    <questiontext format="html">
+        <text><![CDATA[
+            <div dir="rtl" style="font-family: 'Segoe UI', sans-serif; background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; border-right: 5px solid #3b82f6;">
+                <p style="color: #475569; font-size: 1rem; text-align: left; direction: ltr;">3. If \( f'(-2)=-5 \) and \( f' \) is continuous with no zeros on \( (-3, 0) \), then \( f \) is:</p>
+                <h4 style="color: #1e3a8a; text-align: right; margin-top: 10px;">3. إذا كان \( f'(-2)=-5 \) والمشتقة متصلة ولا تملك أصفاراً في \( (-3, 0) \)، فإن الدالة:</h4>
+            </div>
+        ]]></text>
+    </questiontext>
+    <defaultgrade>1.0000000</defaultgrade>
+    <shuffleanswers>1</shuffleanswers>
+    <numbering style="none" />
+    
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">A) Increasing (متزايدة)</div>]]></text>
+    </answer>
+    <answer fraction="100" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">B) Decreasing (متناقصة)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">C) Constant (ثابتة)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">D) Positive (موجبة)</div>]]></text>
+    </answer>
+</question>
 
-with c_prev:
-    if q_idx > 0:
-        if st.button("⬅️ Previous / السابق"):
-            prev_question()
-            st.rerun()
+<question type="multichoice">
+    <name><text>Q04 - Max Location</text></name>
+    <questiontext format="html">
+        <text><![CDATA[
+            <div dir="rtl" style="font-family: 'Segoe UI', sans-serif; background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; border-right: 5px solid #3b82f6;">
+                <p style="color: #475569; font-size: 1rem; text-align: left; direction: ltr;">4. The derivative is \( f'(x) = x^2 - 9 \). The local maximum is at:</p>
+                <h4 style="color: #1e3a8a; text-align: right; margin-top: 10px;">4. مشتقة الدالة هي \( f'(x) = x^2 - 9 \). توجد القيمة العظمى المحلية عند:</h4>
+            </div>
+        ]]></text>
+    </questiontext>
+    <defaultgrade>1.0000000</defaultgrade>
+    <shuffleanswers>1</shuffleanswers>
+    <numbering style="none" />
+    
+    <answer fraction="100" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">A) \( x = -3 \)</div>]]></text>
+        <feedback format="html"><text><![CDATA[<div dir="rtl">ممتاز! الإشارة تتغير من موجب إلى سالب عند -3.</div>]]></text></feedback>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">B) \( x = 3 \)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">C) \( x = 0 \)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">D) \( x = 9 \)</div>]]></text>
+    </answer>
+</question>
 
-with c_next:
-    if q_idx < len(current_quiz) - 1:
-        if st.button("Next / التالي ➡️"):
-            next_question()
-            st.rerun()
+<question type="multichoice">
+    <name><text>Q05 - First Derivative Test</text></name>
+    <questiontext format="html">
+        <text><![CDATA[
+            <div dir="rtl" style="font-family: 'Segoe UI', sans-serif; background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; border-right: 5px solid #3b82f6;">
+                <p style="color: #475569; font-size: 1rem; text-align: left; direction: ltr;">5. If \( f'(x) \) changes from positive to negative at \( x=c \), then \( f(c) \) is:</p>
+                <h4 style="color: #1e3a8a; text-align: right; margin-top: 10px;">5. إذا تغيرت إشارة \( f'(x) \) من موجب إلى سالب عند \( x=c \)، فإن \( f(c) \) هي:</h4>
+            </div>
+        ]]></text>
+    </questiontext>
+    <defaultgrade>1.0000000</defaultgrade>
+    <shuffleanswers>1</shuffleanswers>
+    <numbering style="none" />
+    
+    <answer fraction="100" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">A) Local Max (عظمى محلية)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">B) Local Min (صغرى محلية)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">C) Inflection Point (نقطة انعطاف)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">D) None (لا شيء مما سبق)</div>]]></text>
+    </answer>
+</question>
 
-# زر محاولة جديدة (يظهر في النهاية أو دائماً، حسب التفضيل)
-# سنجعله يظهر دائماً في الوسط كخيار لإعادة التوليد
-with c_new:
-    st.markdown('<div class="new-quiz-btn">', unsafe_allow_html=True)
-    if st.button("🔄 New Quiz / محاولة جديدة (أسئلة مختلفة)"):
-        reset_quiz()
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+<question type="multichoice">
+    <name><text>Q06 - Cubic Interval</text></name>
+    <questiontext format="html">
+        <text><![CDATA[
+            <div dir="rtl" style="font-family: 'Segoe UI', sans-serif; background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; border-right: 5px solid #3b82f6;">
+                <p style="color: #475569; font-size: 1rem; text-align: left; direction: ltr;">6. Find the interval where \( f(x) = x^3 - 3x \) is increasing.</p>
+                <h4 style="color: #1e3a8a; text-align: right; margin-top: 10px;">6. أوجد الفترة التي تكون فيها الدالة \( f(x) = x^3 - 3x \) متزايدة.</h4>
+            </div>
+        ]]></text>
+    </questiontext>
+    <defaultgrade>1.0000000</defaultgrade>
+    <shuffleanswers>1</shuffleanswers>
+    <numbering style="none" />
+    
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">A) \( (-1, 1) \)</div>]]></text>
+    </answer>
+    <answer fraction="100" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">B) \( (-\infty, -1) \cup (1, \infty) \)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">C) \( (1, \infty) \)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">D) \( (-\infty, -1) \)</div>]]></text>
+    </answer>
+</question>
+
+<question type="multichoice">
+    <name><text>Q07 - Strictly Increasing</text></name>
+    <questiontext format="html">
+        <text><![CDATA[
+            <div dir="rtl" style="font-family: 'Segoe UI', sans-serif; background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; border-right: 5px solid #3b82f6;">
+                <p style="color: #475569; font-size: 1rem; text-align: left; direction: ltr;">7. If \( f'(x) > 0 \) for all real numbers, then \( f(x) \) is:</p>
+                <h4 style="color: #1e3a8a; text-align: right; margin-top: 10px;">7. إذا كانت \( f'(x) > 0 \) لجميع الأعداد الحقيقية، فإن الدالة \( f(x) \) تكون:</h4>
+            </div>
+        ]]></text>
+    </questiontext>
+    <defaultgrade>1.0000000</defaultgrade>
+    <shuffleanswers>1</shuffleanswers>
+    <numbering style="none" />
+    
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">A) Strictly Decreasing (متناقصة تماماً)</div>]]></text>
+    </answer>
+    <answer fraction="100" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">B) Strictly Increasing (متزايدة تماماً)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">C) Constant (ثابتة)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">D) Concave Down (مقعرة للأسفل)</div>]]></text>
+    </answer>
+</question>
+
+<question type="multichoice">
+    <name><text>Q08 - Decrease Interval</text></name>
+    <questiontext format="html">
+        <text><![CDATA[
+            <div dir="rtl" style="font-family: 'Segoe UI', sans-serif; background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; border-right: 5px solid #3b82f6;">
+                <p style="color: #475569; font-size: 1rem; text-align: left; direction: ltr;">8. Given \( f'(x) = (x-1)(x+3) \). The function decreases on:</p>
+                <h4 style="color: #1e3a8a; text-align: right; margin-top: 10px;">8. معطى أن \( f'(x) = (x-1)(x+3) \). تتناقص الدالة في الفترة:</h4>
+            </div>
+        ]]></text>
+    </questiontext>
+    <defaultgrade>1.0000000</defaultgrade>
+    <shuffleanswers>1</shuffleanswers>
+    <numbering style="none" />
+    
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">A) \( (1, \infty) \)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">B) \( (-\infty, -3) \)</div>]]></text>
+    </answer>
+    <answer fraction="100" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">C) \( (-3, 1) \)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">D) \( (-1, 3) \)</div>]]></text>
+    </answer>
+</question>
+
+<question type="multichoice">
+    <name><text>Q09 - Horizontal Tangent</text></name>
+    <questiontext format="html">
+        <text><![CDATA[
+            <div dir="rtl" style="font-family: 'Segoe UI', sans-serif; background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; border-right: 5px solid #3b82f6;">
+                <p style="color: #475569; font-size: 1rem; text-align: left; direction: ltr;">9. The function \( f \) has a horizontal tangent when:</p>
+                <h4 style="color: #1e3a8a; text-align: right; margin-top: 10px;">9. يكون لمنحنى الدالة \( f \) مماس أفقي عندما:</h4>
+            </div>
+        ]]></text>
+    </questiontext>
+    <defaultgrade>1.0000000</defaultgrade>
+    <shuffleanswers>1</shuffleanswers>
+    <numbering style="none" />
+    
+    <answer fraction="100" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">A) \( f'(x) = 0 \)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">B) \( f(x) = 0 \)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">C) \( f''(x) = 0 \)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">D) \( f(x) \) is undefined</div>]]></text>
+    </answer>
+</question>
+
+<question type="multichoice">
+    <name><text>Q10 - Graph Shape</text></name>
+    <questiontext format="html">
+        <text><![CDATA[
+            <div dir="rtl" style="font-family: 'Segoe UI', sans-serif; background: #fff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; border-right: 5px solid #3b82f6;">
+                <p style="color: #475569; font-size: 1rem; text-align: left; direction: ltr;">10. If \( f'(x) = 5 \) for all \( x \), then the graph of \( f(x) \) is:</p>
+                <h4 style="color: #1e3a8a; text-align: right; margin-top: 10px;">10. إذا كانت \( f'(x) = 5 \) لكل قيم \( x \)، فإن الرسم البياني للدالة \( f(x) \) عبارة عن:</h4>
+            </div>
+        ]]></text>
+    </questiontext>
+    <defaultgrade>1.0000000</defaultgrade>
+    <shuffleanswers>1</shuffleanswers>
+    <numbering style="none" />
+    
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">A) Horizontal Line (خط أفقي)</div>]]></text>
+    </answer>
+    <answer fraction="100" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">B) Line with slope 5 (خط ميله 5)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">C) Parabola (قطع مكافئ)</div>]]></text>
+    </answer>
+    <answer fraction="0" format="html">
+        <text><![CDATA[<div dir="ltr" style="text-align: left; font-weight: bold; color: #1d4ed8;">D) Exponential Curve (منحنى أسي)</div>]]></text>
+    </answer>
+</question>
+
+</quiz>
