@@ -5,60 +5,83 @@ from matplotlib.ticker import MultipleLocator
 import random
 
 # ---------------------------------------------------------
-# 1. إعداد الصفحة والتنسيقات
+# 1. إعداد الصفحة والتنسيقات (CSS)
 # ---------------------------------------------------------
 st.set_page_config(layout="wide", page_title="Bilingual Calculus Quiz")
 
 st.markdown("""
 <style>
-    /* جعل التطبيق يدعم الكتابة المختلطة */
-    .stApp { direction: ltr; }
-    
-    /* تنسيق صندوق السؤال */
-    .question-box {
-        background-color: #f0f7ff;
-        padding: 25px;
-        border-radius: 12px;
-        margin-bottom: 25px;
-        border-left: 6px solid #0056b3;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    /* 1. توسيط عام للتطبيق */
+    .stApp {
+        text-align: center;
     }
     
-    .q-header-en {
+    /* 2. تنسيق صندوق السؤال */
+    .question-container {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 15px;
+        border: 2px solid #e9ecef;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .q-text-en {
         font-size: 18px;
         font-weight: bold;
-        color: #0056b3;
+        color: #0d6efd;
         margin-bottom: 5px;
-        text-align: left;
-        font-family: sans-serif;
+        direction: ltr; /* انجليزي يسار ليمين */
     }
-    
-    .q-header-ar {
+    .q-text-ar {
         font-size: 20px;
         font-weight: bold;
-        color: #0056b3;
-        margin-bottom: 15px;
-        text-align: right;
+        color: #0d6efd;
+        margin-top: 5px;
+        direction: rtl; /* عربي يمين ليسار */
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        direction: rtl;
-    }
-    
-    /* تنسيق الخيارات (Radio Buttons) */
-    .stRadio > div {
-        direction: ltr !important; /* إجبار الاتجاه من اليسار لليمين */
-        text-align: left !important;
-        background-color: #ffffff;
-        padding: 10px;
-        border-radius: 8px;
-    }
-    
-    /* تكبير خط الخيارات ليكون واضحاً */
-    .stRadio label {
-        font-size: 16px !important;
-        padding-bottom: 10px;
     }
 
-    .stButton button { width: 100%; font-size: 18px; font-weight: bold; }
+    /* 3. تنسيق خيارات الراديو (الأهم) */
+    
+    /* جعل الحاوية للكلام في المنتصف */
+    div[role="radiogroup"] {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+    
+    /* تنسيق كل خيار على حدة */
+    div[data-testid="stMarkdownContainer"] p {
+        text-align: center; /* توسيط النص */
+        font-size: 18px;
+        line-height: 1.6;
+    }
+    
+    /* تنسيق خاص لفصل اللغتين داخل الخيار الواحد */
+    .opt-en {
+        display: block;
+        direction: ltr;
+        color: #333;
+        font-weight: 500;
+    }
+    .opt-ar {
+        display: block;
+        direction: rtl;
+        color: #555;
+        margin-top: 4px;
+        font-family: 'Segoe UI', sans-serif;
+    }
+    
+    /* تنسيق الزر */
+    .stButton button {
+        width: 50%;
+        margin: 0 auto;
+        display: block;
+        font-size: 20px;
+        background-color: #0d6efd;
+        color: white;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -83,7 +106,7 @@ def plot_derivative(func_prime, x_range=(-4, 5), y_range=(-4, 5)):
     x = np.linspace(x_range[0], x_range[1], 1000)
     y = func_prime(x)
     
-    fig, ax = plt.subplots(figsize=(8, 3.5)) # عرض أوسع قليلاً
+    fig, ax = plt.subplots(figsize=(6, 3))
     
     # محاور في المنتصف
     ax.spines['left'].set_position('zero')
@@ -94,11 +117,9 @@ def plot_derivative(func_prime, x_range=(-4, 5), y_range=(-4, 5)):
     ax.yaxis.set_major_locator(MultipleLocator(1))
     ax.grid(True, which='both', linestyle=':', alpha=0.6)
     
-    # رسم المشتقة
+    # الرسم
     ax.plot(x, y, color='#d32f2f', linewidth=2.5, label="f'(x)")
-    
-    # عنوان الرسم داخل الإطار
-    ax.text(x_range[1]*0.85, y_range[1]*0.8, "y = f'(x)", fontsize=12, color='#d32f2f', fontweight='bold')
+    ax.text(x_range[1]*0.8, y_range[1]*0.8, "y = f'(x)", fontsize=12, color='#d32f2f', fontweight='bold')
     
     ax.set_ylim(y_range)
     ax.set_xlim(x_range)
@@ -106,128 +127,139 @@ def plot_derivative(func_prime, x_range=(-4, 5), y_range=(-4, 5)):
     return fig
 
 # ---------------------------------------------------------
-# 4. بيانات الأسئلة (ثنائية اللغة)
+# 4. البيانات (تنسيق النصوص HTML داخل Markdown)
 # ---------------------------------------------------------
 
-# الدوال الرياضية (المشتقات)
-def q1_deriv(x): return -x + 1 # خطي يقطع عند 1
-def q2_deriv(x): return (x-1)*(x-3) * 0.5 # قطع مكافئ يقطع عند 1 و 3 (مقعر لأعلى)
-def q3_deriv(x): return -0.5*(x+1)**2 * (x-2) # يمس عند -1 ويقطع عند 2
-def q4_deriv(x): return x # يقطع عند 0
+# دالة مساعدة لتنسيق النص (انجليزي فوق - عربي تحت)
+def format_option(en_text, ar_text):
+    # نستخدم HTML span مع كلاسات CSS التي عرفناها بالأعلى
+    return f"""<span class="opt-en">{en_text}</span><span class="opt-ar">{ar_text}</span>"""
 
-# قائمة الأسئلة
+# تعريف المشتقات
+def q1_deriv(x): return -x + 1 
+def q2_deriv(x): return 0.5*(x-1)*(x-3) 
+def q3_deriv(x): return 0.2*(x+1)**2 * (x-2)
+def q4_deriv(x): return x 
+
 questions = [
     {
         "id": 1,
         "func": q1_deriv,
-        "q_en": "Based on the graph of $f'(x)$, determine the intervals of increase/decrease and extrema.",
-        "q_ar": "بناءً على رسم المشتقة $f'(x)$، حدد فترات التزايد والتناقص والقيم القصوى.",
-        "correct": r"Inc on $(-\infty, 1)$, Dec on $(1, \infty)$; Max at $x=1$  ||  تزايد $(-\infty, 1)$، تناقص $(1, \infty)$؛ عظمى عند $1$",
+        "q_en": "From the graph of f'(x), determine the local extrema.",
+        "q_ar": "من رسم المشتقة f'(x)، حدد القيم القصوى المحلية.",
+        "correct": format_option(r"Local Max at $x=1$", "قيمة عظمى محلية عند $x=1$"),
         "distractors": [
-            r"Dec on $(-\infty, 1)$, Inc on $(1, \infty)$; Min at $x=1$  ||  تناقص $(-\infty, 1)$، تزايد $(1, \infty)$؛ صغرى عند $1$",
-            r"Inc on $(-\infty, 0)$, Dec on $(0, \infty)$; Max at $x=0$  ||  تزايد $(-\infty, 0)$، تناقص $(0, \infty)$؛ عظمى عند $0$",
-            r"Increasing everywhere; Inflection at $x=1$  ||  تزايد على مجالها؛ نقطة انقلاب عند $1$"
+            format_option(r"Local Min at $x=1$", "قيمة صغرى محلية عند $x=1$"),
+            format_option(r"Local Max at $x=0$", "قيمة عظمى محلية عند $x=0$"),
+            format_option(r"No local extrema", "لا توجد قيم قصوى محلية")
         ]
     },
     {
         "id": 2,
-        "func": q2_deriv, # + (inc) -> 1 -> - (dec) -> 3 -> + (inc)
-        "q_en": "Identify the local extrema and monotonicity from the graph of $f'(x)$.",
-        "q_ar": "حدد القيم القصوى المحلية وفترات الاطراد من رسم المشتقة $f'(x)$.",
-        "correct": r"Max at $x=1$, Min at $x=3$  ||  عظمى عند $x=1$، صغرى عند $x=3$",
+        "func": q2_deriv,
+        "q_en": "Identify the intervals of decrease for f(x).",
+        "q_ar": "حدد فترات التناقص للدالة f(x).",
+        "correct": format_option(r"Decrease on $(1, 3)$", "متناقصة في الفترة $(1, 3)$"),
         "distractors": [
-            r"Min at $x=1$, Max at $x=3$  ||  صغرى عند $x=1$، عظمى عند $x=3$",
-            r"Max at $x=2$ (Vertex)  ||  عظمى عند رأس المنحنى $x=2$",
-            r"Decreasing on $(1, 3)$ only  ||  متناقصة فقط في الفترة $(1, 3)$"
+            format_option(r"Decrease on $(-\infty, 1)$ and $(3, \infty)$", "متناقصة في $(-\infty, 1)$ و $(3, \infty)$"),
+            format_option(r"Decrease on $(-\infty, 2)$", "متناقصة في الفترة $(-\infty, 2)$"),
+            format_option(r"Increase on $(1, 3)$", "متزايدة في الفترة $(1, 3)$")
         ]
     },
     {
         "id": 3,
-        "func": q3_deriv, # + -> -1 (touch) -> + -> 2 -> -
-        "q_en": "Analyze the critical points of $f(x)$ given the graph of $f'(x)$.",
-        "q_ar": "حلل النقاط الحرجة للدالة $f(x)$ بناءً على رسم المشتقة.",
-        "correct": r"Inc $(-\infty, 2)$, Dec $(2, \infty)$; Max at $x=2$  ||  تزايد $(-\infty, 2)$، تناقص $(2, \infty)$؛ عظمى عند $2$",
+        "func": q3_deriv,
+        "q_en": "Analyze the critical point at $x=-1$.",
+        "q_ar": "حلل النقطة الحرجة عند $x=-1$.",
+        "correct": format_option(r"Neither Max nor Min (Saddle)", "ليست عظمى ولا صغرى (نقطة سرج)"),
         "distractors": [
-            r"Max at $x=-1$, Min at $x=2$  ||  عظمى عند $-1$، صغرى عند $2$",
-            r"Min at $x=-1$, Max at $x=2$  ||  صغرى عند $-1$، عظمى عند $2$",
-            r"Dec $(-\infty, 2)$, Inc $(2, \infty)$; Min at $x=2$  ||  تناقص $(-\infty, 2)$، تزايد $(2, \infty)$؛ صغرى عند $2$"
+            format_option(r"Local Maximum", "قيمة عظمى محلية"),
+            format_option(r"Local Minimum", "قيمة صغرى محلية"),
+            format_option(r"Inflection Point only", "نقطة انقلاب فقط")
         ]
     },
     {
         "id": 4,
-        "func": q4_deriv, # - -> 0 -> +
-        "q_en": "Find the local extrema of $f(x)$ from the graph of $f'(x)$.",
-        "q_ar": "أوجد القيم القصوى المحلية للدالة $f(x)$ من رسم المشتقة.",
-        "correct": r"Local Min at $x=0$  ||  قيمة صغرى محلية عند $x=0$",
+        "func": q4_deriv,
+        "q_en": "Determine the behavior at $x=0$.",
+        "q_ar": "حدد سلوك الدالة عند $x=0$.",
+        "correct": format_option(r"Local Minimum", "قيمة صغرى محلية"),
         "distractors": [
-            r"Local Max at $x=0$  ||  قيمة عظمى محلية عند $x=0$",
-            r"No local extrema  ||  لا توجد قيم قصوى محلية",
-            r"Inflection point at $x=0$  ||  نقطة انقلاب عند $x=0$"
+            format_option(r"Local Maximum", "قيمة عظمى محلية"),
+            format_option(r"Discontinuity", "نقطة انفصال"),
+            format_option(r"Vertical Asymptote", "خط تقارب رأسي")
         ]
     }
 ]
 
 # ---------------------------------------------------------
-# 5. العرض (Rendering)
+# 5. العرض
 # ---------------------------------------------------------
 
 q_idx = st.session_state.q_index
 q = questions[q_idx]
-
 progress = (q_idx + 1) / len(questions)
+
+# شريط التقدم
 st.progress(progress)
 
-# --- صندوق السؤال (ثنائي اللغة) ---
+# 1. عنوان السؤال (في المنتصف)
 st.markdown(f"""
-<div class="question-box">
-    <div class="q-header-en">Q{q_idx+1}: {q['q_en']}</div>
-    <div class="q-header-ar">س{q_idx+1}: {q['q_ar']}</div>
+<div class="question-container">
+    <div class="q-text-en">Q{q_idx+1}: {q['q_en']}</div>
+    <div class="q-text-ar">س{q_idx+1}: {q['q_ar']}</div>
 </div>
 """, unsafe_allow_html=True)
 
-# --- رسم المشتقة ---
-col_l, col_c, col_r = st.columns([1, 6, 1])
-with col_c:
+# 2. الرسم البياني (في المنتصف)
+col_spacer1, col_graph, col_spacer2 = st.columns([1, 2, 1])
+with col_graph:
     st.pyplot(plot_derivative(q['func']))
 
-st.markdown("---")
+st.write("---")
 
-# --- الاختيارات (Bilingual & LTR) ---
+# 3. الاختيارات (في المنتصف، انجليزي فوق عربي)
 options = [q['correct']] + q['distractors']
-random.seed(q_idx + 100)
+random.seed(q_idx + 2024)
 random.shuffle(options)
 
-# عرض الاختيارات
-selected_option = st.radio(
-    "Choose the correct answer / اختر الإجابة الصحيحة:",
+# نستخدم allow_unsafe_html لعرض الـ span والـ css داخل الراديو
+# ملاحظة: streamlit لا يدعم html داخل الراديو بشكل مباشر إلا عبر markdown wrapper،
+# ولكن هنا سنستخدم الحيلة عبر تمرير النصوص وسيتكفل الـ CSS بالأعلى بالتنسيق.
+# بما أن st.radio يقرأ النص كنص عادي، سنستخدم التنسيق عبر class CSS على الحاوية.
+
+# الحل الأفضل لضمان التنسيق هو استخدام captions مخصصة، ولكن للراديو سنعتمد على Markdown rendering
+user_choice = st.radio(
+    "Select Answer / اختر الإجابة:",
     options,
-    key=f"radio_{q_idx}"
+    key=f"radio_{q_idx}",
+    label_visibility="collapsed" # إخفاء عنوان الراديو لأنه مكرر
 )
 
-# زر التحقق
-col_btn_l, col_btn_r = st.columns([3, 1])
-with col_btn_r:
-    st.write("")
-    check = st.button("Check / تحقق")
+st.write("---")
 
-# نتيجة التحقق
+# 4. زر التحقق والتنقل (في المنتصف)
+check = st.button("Check Answer / تحقق من الإجابة")
+
 if check:
-    if selected_option == q['correct']:
-        st.success("Correct Answer! ✅ إجابة صحيحة")
+    # بما أن النصوص تحتوي HTML للمقارنة يجب أن تكون دقيقة
+    if user_choice == q['correct']:
+        st.success("✅ Correct! إجابة صحيحة")
         st.balloons()
     else:
-        st.error("Incorrect ❌ إجابة خاطئة")
-        st.info(f"The Correct Answer is: \n\n {q['correct']}")
+        st.error("❌ Incorrect. إجابة خاطئة")
+
+# مساحة فاصلة
+st.write("")
 
 # أزرار التنقل
-st.markdown("---")
-c1, c2, c3 = st.columns([1, 2, 1])
-with c1:
+col_prev, col_next = st.columns(2)
+with col_prev:
     if st.session_state.q_index > 0:
         if st.button("⬅️ Previous / السابق"):
             prev_question()
             st.rerun()
-with c3:
+with col_next:
     if st.session_state.q_index < len(questions) - 1:
         if st.button("Next / التالي ➡️"):
             next_question()
