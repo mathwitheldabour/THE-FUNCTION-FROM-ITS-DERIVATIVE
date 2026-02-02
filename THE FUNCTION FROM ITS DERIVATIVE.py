@@ -5,84 +5,52 @@ from matplotlib.ticker import MultipleLocator
 import random
 
 # ---------------------------------------------------------
-# 1. إعداد الصفحة والتنسيقات (CSS)
+# 1. إعداد الصفحة والتنسيقات
 # ---------------------------------------------------------
-st.set_page_config(layout="wide", page_title="Bilingual Calculus Quiz")
+st.set_page_config(layout="wide", page_title="Calculus Quiz")
 
 st.markdown("""
 <style>
+    /* توسيط النصوص */
     .stApp { text-align: center; }
     
-    /* تنسيق صندوق السؤال */
-    .question-container {
-        background-color: #f0f8ff;
+    /* تنسيق صندوق السؤال الرئيسي */
+    .question-box {
+        background-color: #f8f9fa;
         padding: 20px;
-        border-radius: 15px;
-        border: 2px solid #007bff;
-        margin-bottom: 20px;
-        text-align: center;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .q-text-en { font-size: 18px; font-weight: bold; color: #0056b3; direction: ltr; margin-bottom: 8px;}
-    .q-text-ar { font-size: 20px; font-weight: bold; color: #0056b3; direction: rtl; font-family: 'Segoe UI', sans-serif;}
-
-    /* تنسيق بطاقات الاختيارات */
-    .option-card {
-        background-color: white;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 10px;
-        transition: 0.3s;
-    }
-    .option-card:hover {
-        border-color: #007bff;
-        box-shadow: 0 0 10px rgba(0,123,255,0.2);
-    }
-    .opt-label {
-        font-weight: bold;
-        font-size: 20px;
-        color: #d63384; /* لون الحرف A, B, C */
-        margin-bottom: 5px;
-        display: block;
-    }
-    .opt-en {
-        display: block;
-        direction: ltr;
-        font-size: 18px;
-        color: #333;
-        font-weight: 500;
-        margin-bottom: 5px;
-    }
-    .opt-ar {
-        display: block;
-        direction: rtl;
-        font-size: 18px;
-        color: #555;
-        font-family: 'Segoe UI', sans-serif;
-        border-top: 1px dashed #eee; /* فاصل خفيف */
-        padding-top: 5px;
+        border-radius: 12px;
+        border-top: 5px solid #007bff;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     
-    /* تحسين شكل الراديو وزر التحقق */
-    .stRadio > div {
-        flex-direction: row;
-        justify-content: center;
-        gap: 20px;
+    /* تنسيق الحرف A, B, C */
+    .option-letter {
+        color: #e83e8c;
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 10px;
     }
+    
+    /* ضبط حجم الأزرار */
     .stButton button {
-        width: 60%;
+        width: 40%;
         margin: 0 auto;
         display: block;
-        font-size: 20px;
+        font-size: 18px;
         background-color: #28a745;
         color: white;
+    }
+    
+    /* تحسين مظهر الراديو */
+    div[role="radiogroup"] {
+        justify-content: center;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. إدارة الحالة
+# 2. إدارة الحالة (Session State)
 # ---------------------------------------------------------
 if 'q_index' not in st.session_state:
     st.session_state.q_index = 0
@@ -96,12 +64,13 @@ def prev_question():
         st.session_state.q_index -= 1
 
 # ---------------------------------------------------------
-# 3. الرسم البياني
+# 3. دالة الرسم البياني للمشتقة
 # ---------------------------------------------------------
 def plot_derivative(func_prime, x_range=(-4, 5), y_range=(-4, 5)):
     x = np.linspace(x_range[0], x_range[1], 1000)
     y = func_prime(x)
     fig, ax = plt.subplots(figsize=(6, 3))
+    
     ax.spines['left'].set_position('zero')
     ax.spines['bottom'].set_position('zero')
     ax.spines['right'].set_color('none')
@@ -109,158 +78,171 @@ def plot_derivative(func_prime, x_range=(-4, 5), y_range=(-4, 5)):
     ax.xaxis.set_major_locator(MultipleLocator(1))
     ax.yaxis.set_major_locator(MultipleLocator(1))
     ax.grid(True, which='both', linestyle=':', alpha=0.6)
-    ax.plot(x, y, color='#d32f2f', linewidth=2.5)
-    ax.text(x_range[1]*0.8, y_range[1]*0.8, "y = f'(x)", fontsize=12, color='#d32f2f', fontweight='bold')
+    
+    # رسم الدالة
+    ax.plot(x, y, color='#007bff', linewidth=2.5) # لون أزرق مثل الصورة
+    ax.text(x_range[1]*0.8, y_range[1]*0.8, "y = f'(x)", fontsize=12, color='#007bff', fontweight='bold')
+    
     ax.set_ylim(y_range)
     ax.set_xlim(x_range)
     plt.tight_layout()
     return fig
 
 # ---------------------------------------------------------
-# 4. البيانات
+# 4. بيانات الأسئلة (استخدام r"..." للمعادلات)
 # ---------------------------------------------------------
-# تعريف المشتقات
-def q1_deriv(x): return -x + 1 
-def q2_deriv(x): return 0.5*(x-1)*(x-3) 
-def q3_deriv(x): return 0.2*(x+1)**2 * (x-2)
-def q4_deriv(x): return x 
 
-# قائمة الأسئلة - لاحظ فصلنا النصوص الإنجليزية والعربية
+# الدوال
+def q1_deriv(x): return -x + 1  # خطي
+def q2_deriv(x): return 0.5*(x-1)*(3-x) # قطع مكافئ مقلوب (موجب بين 1 و 3)
+def q3_deriv(x): return 0.2*(x+1)*(x-2)**2 # يقطع عند -1 ويمس عند 2
+def q4_deriv(x): return 0.5*(x+1)*(x-2)*(x-4) # تكعيبي 
+
 questions = [
     {
         "id": 1,
         "func": q1_deriv,
-        "q_en": "From the graph of f'(x), determine the local extrema.",
-        "q_ar": "من رسم المشتقة f'(x)، حدد القيم القصوى المحلية.",
+        "q_en": "From the graph of $f'(x)$, determine the local extrema.",
+        "q_ar": "من رسم المشتقة $f'(x)$، حدد القيم القصوى المحلية.",
         "options": [
-            {"code": "A", "en": r"Local Max at $x=1$", "ar": "قيمة عظمى محلية عند $x=1$", "is_correct": True},
-            {"code": "B", "en": r"Local Min at $x=1$", "ar": "قيمة صغرى محلية عند $x=1$", "is_correct": False},
-            {"code": "C", "en": r"Local Max at $x=0$", "ar": "قيمة عظمى محلية عند $x=0$", "is_correct": False},
-            {"code": "D", "en": r"No local extrema", "ar": "لا توجد قيم قصوى محلية", "is_correct": False},
+            {"code": "A", "en": r"Local Max at $x=1$", "ar": r"قيمة عظمى محلية عند $x=1$", "correct": True},
+            {"code": "B", "en": r"Local Min at $x=1$", "ar": r"قيمة صغرى محلية عند $x=1$", "correct": False},
+            {"code": "C", "en": r"Local Max at $x=0$", "ar": r"قيمة عظمى محلية عند $x=0$", "correct": False},
+            {"code": "D", "en": r"No local extrema", "ar": r"لا توجد قيم قصوى محلية", "correct": False},
         ]
     },
     {
         "id": 2,
+        # الرسم 22: قطع مكافئ مقلوب، موجب بين 1 و 3
+        # دالة f تتزايد في (1,3) وتتناقص خارجها
         "func": q2_deriv,
-        "q_en": "Identify the intervals of decrease for f(x).",
-        "q_ar": "حدد فترات التناقص للدالة f(x).",
+        "q_en": "Identify the intervals of decrease for $f(x)$.",
+        "q_ar": "حدد فترات التناقص للدالة $f(x)$.",
         "options": [
-            {"code": "A", "en": r"Decrease on $(1, 3)$", "ar": "متناقصة في الفترة $(1, 3)$", "is_correct": True},
-            {"code": "B", "en": r"Decrease on $(-\infty, 1)$", "ar": "متناقصة في الفترة $(-\infty, 1)$", "is_correct": False},
-            {"code": "C", "en": r"Decrease on $(-\infty, 1) \cup (3, \infty)$", "ar": "متناقصة في $(-\infty, 1)$ و $(3, \infty)$", "is_correct": False},
-            {"code": "D", "en": r"Increase on $(1, 3)$", "ar": "متزايدة في الفترة $(1, 3)$", "is_correct": False},
+            {"code": "A", "en": r"Decrease on $(-\infty, 1) \cup (3, \infty)$", "ar": r"متناقصة في $(-\infty, 1) \cup (3, \infty)$", "correct": True},
+            {"code": "B", "en": r"Decrease on $(1, 3)$", "ar": r"متناقصة في الفترة $(1, 3)$", "correct": False},
+            {"code": "C", "en": r"Increase on $(-\infty, 1)$", "ar": r"متزايدة في الفترة $(-\infty, 1)$", "correct": False},
+            {"code": "D", "en": r"Decrease on $(3, \infty)$ only", "ar": r"متناقصة في $(3, \infty)$ فقط", "correct": False},
         ]
     },
     {
         "id": 3,
+        # الرسم 24 تقريباً: يقطع عند -1، يمس عند 2
         "func": q3_deriv,
-        "q_en": "Analyze the critical point at $x=-1$.",
-        "q_ar": "حلل النقطة الحرجة عند $x=-1$.",
+        "q_en": "Analyze the critical point at $x=2$.",
+        "q_ar": "حلل النقطة الحرجة عند $x=2$.",
         "options": [
-            {"code": "A", "en": r"Neither Max nor Min (Saddle)", "ar": "ليست عظمى ولا صغرى (نقطة سرج)", "is_correct": True},
-            {"code": "B", "en": r"Local Maximum", "ar": "قيمة عظمى محلية", "is_correct": False},
-            {"code": "C", "en": r"Local Minimum", "ar": "قيمة صغرى محلية", "is_correct": False},
-            {"code": "D", "en": r"Vertical Asymptote", "ar": "خط تقارب رأسي", "is_correct": False},
-        ]
-    },
-    {
-        "id": 4,
-        "func": q4_deriv,
-        "q_en": "Determine the behavior at $x=0$.",
-        "q_ar": "حدد سلوك الدالة عند $x=0$.",
-        "options": [
-            {"code": "A", "en": r"Local Minimum", "ar": "قيمة صغرى محلية", "is_correct": True},
-            {"code": "B", "en": r"Local Maximum", "ar": "قيمة عظمى محلية", "is_correct": False},
-            {"code": "C", "en": r"Point of Inflection", "ar": "نقطة انقلاب", "is_correct": False},
-            {"code": "D", "en": r"Discontinuity", "ar": "نقطة انفصال", "is_correct": False},
+            {"code": "A", "en": r"Saddle Point (Inflection)", "ar": r"نقطة سرج (انقلاب)", "correct": True},
+            {"code": "B", "en": r"Local Maximum", "ar": r"قيمة عظمى محلية", "correct": False},
+            {"code": "C", "en": r"Local Minimum", "ar": r"قيمة صغرى محلية", "correct": False},
+            {"code": "D", "en": r"Cusp (Sharp corner)", "ar": r"رأس حاد (Cusp)", "correct": False},
         ]
     }
 ]
 
 # ---------------------------------------------------------
-# 5. العرض
+# 5. العرض والتصميم
 # ---------------------------------------------------------
 
 q_idx = st.session_state.q_index
 q = questions[q_idx]
-progress = (q_idx + 1) / len(questions)
 
-st.progress(progress)
+# شريط التقدم
+st.progress((q_idx + 1) / len(questions))
 
-# 1. عنوان السؤال
+# 1. صندوق السؤال
 st.markdown(f"""
-<div class="question-container">
-    <div class="q-text-en">Q{q_idx+1}: {q['q_en']}</div>
-    <div class="q-text-ar">س{q_idx+1}: {q['q_ar']}</div>
+<div class="question-box">
+    <div style="text-align: left; direction: ltr; font-weight: bold; color: #0056b3; font-size: 18px;">Q{q_idx+1}: {q['q_en']}</div>
+    <div style="text-align: right; direction: rtl; font-weight: bold; color: #0056b3; font-size: 20px; margin-top: 10px;">س{q_idx+1}: {q['q_ar']}</div>
 </div>
 """, unsafe_allow_html=True)
 
-# 2. الرسم البياني
-col1, col_graph, col2 = st.columns([1, 2, 1])
-with col_graph:
+# 2. الرسم البياني (في المنتصف)
+c1, c2, c3 = st.columns([1, 2, 1])
+with c2:
     st.pyplot(plot_derivative(q['func']))
 
 st.write("---")
 
-# 3. عرض الخيارات (الحيلة هنا: عرضنا HTML واستخدمنا الراديو للاختيار فقط)
-# خلط الخيارات مرة واحدة وتثبيتها باستخدام الـ Seed
-random.seed(q_idx + 3000)
-current_options = q['options'].copy()
-random.shuffle(current_options)
+# 3. عرض الخيارات (باستخدام الحاويات Native Containers)
+# هذه الطريقة تضمن ظهور المعادلات بشكل صحيح لأننا لا نستخدم HTML للنصوص
 
-# عرض البطاقات المنسقة
-cols = st.columns(len(current_options))
-for idx, opt in enumerate(current_options):
-    # نعيد تسمية الكود ليكون A, B, C, D بناءً على الترتيب الجديد
-    display_code = chr(65 + idx) 
-    opt['display_code'] = display_code # حفظ الحرف المعروض للاستخدام لاحقاً
+random.seed(q_idx + 42)
+current_opts = q['options'].copy()
+random.shuffle(current_opts)
+letters = ['A', 'B', 'C', 'D']
+
+# إنشاء 4 أعمدة للخيارات
+cols = st.columns(4)
+
+# حفظ ترتيب الإجابات لزر الراديو
+option_map = {} 
+
+for idx, col in enumerate(cols):
+    opt = current_opts[idx]
+    display_letter = letters[idx]
     
-    with cols[idx]:
-        st.markdown(f"""
-        <div class="option-card">
-            <span class="opt-label">{display_code}</span>
-            <span class="opt-en">{opt['en']}</span>
-            <span class="opt-ar">{opt['ar']}</span>
-        </div>
-        """, unsafe_allow_html=True)
+    # حفظ الرابط بين الحرف والخيار
+    option_map[display_letter] = opt
+    
+    with col:
+        # إنشاء بطاقة بحدود (Native Streamlit Container)
+        with st.container(border=True):
+            # 1. الحرف A, B, C...
+            st.markdown(f":pink[**{display_letter}**]")
+            
+            # 2. النص الإنجليزي (يسار)
+            # Streamlit ينسق المعادلات تلقائياً هنا
+            st.markdown(opt['en'])
+            
+            # 3. فاصل
+            st.markdown("---")
+            
+            # 4. النص العربي (يمين)
+            # نستخدم Markdown عادي لضمان ظهور المعادلات، ونتركه محاذاة لليسار للحفاظ على تنسيق المعادلة
+            # أو يمكننا كتابة النص العربي ببساطة
+            st.markdown(f"{opt['ar']}")
 
-# 4. زر الاختيار (بسيط جداً الآن)
+# 4. زر الاختيار
 selection = st.radio(
-    "Select the correct option / اختر الرمز الصحيح:",
-    [opt['display_code'] for opt in current_options],
+    "Choose your answer / اختر إجابتك:",
+    letters,
     horizontal=True,
     label_visibility="collapsed"
 )
 
+# 5. التحقق
 st.write("")
 check = st.button("Check Answer / تحقق من الإجابة")
 
 if check:
-    # البحث عن الخيار المختار
-    chosen_opt = next(item for item in current_options if item["display_code"] == selection)
+    chosen_opt = option_map[selection]
     
-    if chosen_opt['is_correct']:
-        st.success("✅ Correct! إجابة صحيحة")
+    if chosen_opt['correct']:
+        st.success(f"✅ Correct! الإجابة ({selection}) صحيحة.")
         st.balloons()
     else:
-        st.error("❌ Incorrect. إجابة خاطئة")
-        # البحث عن الإجابة الصحيحة لعرضها
-        correct_opt = next(item for item in current_options if item["is_correct"])
-        st.markdown(f"""
-        <div style="background-color:#d4edda; color:#155724; padding:10px; border-radius:5px; direction:rtl; text-align:center;">
-            الإجابة الصحيحة هي: <b>{correct_opt['display_code']}</b><br>
-            {correct_opt['ar']} <br> {correct_opt['en']}
-        </div>
-        """, unsafe_allow_html=True)
+        st.error(f"❌ Incorrect. إجابة خاطئة.")
+        
+        # البحث عن الإجابة الصحيحة
+        correct_letter = [k for k, v in option_map.items() if v['correct']][0]
+        correct_content = option_map[correct_letter]
+        
+        st.info(f"The correct answer is **{correct_letter}**:\n\n"
+                f"{correct_content['en']}\n\n"
+                f"{correct_content['ar']}")
 
 st.markdown("---")
-c1, c2 = st.columns(2)
-with c1:
+
+# أزرار التنقل
+col_prev, col_next = st.columns(2)
+with col_prev:
     if st.session_state.q_index > 0:
         if st.button("⬅️ Previous / السابق"):
             prev_question()
             st.rerun()
-with c2:
+with col_next:
     if st.session_state.q_index < len(questions) - 1:
         if st.button("Next / التالي ➡️"):
             next_question()
